@@ -4,7 +4,7 @@ version = "1.0.3"
 description = "funquery"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [ "nltsecret>=1.4.83",]
+dependencies = [ "funsecret>=1.4.83",]
 [[project.authors]]
 name = "牛哥"
 email = "niuliangtao@qq.com"
