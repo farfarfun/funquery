@@ -1,10 +1,12 @@
 [project]
 name = "funquery"
-version = "1.0.3"
+version = "1.0.4"
 description = "funquery"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [ "funsecret>=1.4.83", "requests>=2.31.0",]
+license = "MIT"
+license-files = ["LICENSE"]
 [[project.authors]]
 name = "牛哥"
 email = "niuliangtao@qq.com"
@@ -12,7 +14,6 @@ email = "niuliangtao@qq.com"
 [[project.authors]]
 name = "farfarfun"
 email = "farfarfun@qq.com"
-
 [[project.maintainers]]
 name = "牛哥"
 email = "niuliangtao@qq.com"
@@ -20,11 +21,9 @@ email = "niuliangtao@qq.com"
 [[project.maintainers]]
 name = "farfarfun"
 email = "farfarfun@qq.com"
-
 [project.urls]
 Organization = "https://github.com/farfarfun"
 Repository = "https://github.com/farfarfun/funquery"
 Releases = "https://github.com/farfarfun/funquery/releases"
 
 [tool.setuptools]
-license-files = []

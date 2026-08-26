@@ -36,10 +36,7 @@ uv add funquery
 from funquery.redash import RedashClient
 
 # 方式一：直接传入参数
-client = RedashClient(
-    redash_url="https://redash.example.com",
-    api_key="your-api-key"
-)
+client = RedashClient(redash_url="https://redash.example.com", api_key="your-api-key")
 
 # 方式二：从 funsecret 读取配置
 # 需要配置 visable.middleware.redash.redash_url 和 visable.middleware.redash.api_key
@@ -61,7 +58,7 @@ result = client.run_query_and_wait(
     query_id=123,
     parameters={"date_param": "2024-01-01"},  # 参数化查询
     max_age=0,  # 0 表示强制重新执行
-    timeout=60  # 超时时间（秒）
+    timeout=60,  # 超时时间（秒）
 )
 
 # 获取查询结果数据
@@ -95,11 +92,9 @@ all_queries = client.paginate(client.queries, page_size=100)
 query = client.query(query_id=123)
 
 # 创建查询
-new_query = client.create_query({
-    "name": "My Query",
-    "query": "SELECT * FROM users",
-    "data_source_id": 1
-})
+new_query = client.create_query(
+    {"name": "My Query", "query": "SELECT * FROM users", "data_source_id": 1}
+)
 
 # 更新查询
 client.update_query(query_id=123, data={"name": "Updated Name"})
@@ -131,8 +126,7 @@ client.update_dashboard(dashboard_id=123, properties={"tags": ["tag1", "tag2"]})
 
 # 复制 Dashboard（包含所有 Widget）
 copied_dashboard = client.duplicate_dashboard(
-    slug="source-dashboard",
-    new_name="Dashboard Copy"
+    slug="source-dashboard", new_name="Dashboard Copy"
 )
 
 # 创建 Widget
@@ -140,7 +134,7 @@ client.create_widget(
     dashboard_id=123,
     visualization_id=456,
     text="Widget Title",
-    options={"position": {"col": 0, "row": 0, "sizeX": 3, "sizeY": 3}}
+    options={"position": {"col": 0, "row": 0, "sizeX": 3, "sizeY": 3}},
 )
 
 # 归档 Dashboard
@@ -158,9 +152,7 @@ alert = client.get_alert(alert_id=123)
 
 # 创建告警
 new_alert = client.create_alert(
-    name="My Alert",
-    query_id=123,
-    options={"column": "count", "op": ">", "value": 100}
+    name="My Alert", query_id=123, options={"column": "count", "op": ">", "value": 100}
 )
 
 # 更新告警
@@ -185,8 +177,8 @@ new_ds = client.create_data_source(
         "port": 5432,
         "dbname": "mydb",
         "user": "user",
-        "password": "pass"
-    }
+        "password": "pass",
+    },
 )
 ```
 
