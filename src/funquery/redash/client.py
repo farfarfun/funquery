@@ -13,7 +13,7 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import requests
-from funsecret import read_secret
+from nltsecret import read_secret
 
 # Job 状态 (GET /api/jobs/<job_id>)
 JOB_PENDING = 1
@@ -37,7 +37,7 @@ class RedashClient:
         api_key: Optional[str] = None,
         raise_for_status: bool = True,
     ):
-        """初始化客户端。未传 redash_url/api_key 时从 funsecret 读取 visable.middleware.redash 配置。
+        """初始化客户端。未传 redash_url/api_key 时从 nltsecret 读取 visable.middleware.redash 配置。
 
         Args:
             redash_url: Redash 根 URL（如 https://redash.example.com），末尾斜杠会自动去掉。
