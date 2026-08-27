@@ -1,6 +1,6 @@
 [project]
 name = "funquery"
-version = "1.0.4"
+version = "1.0.5"
 description = "funquery"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,6 +25,10 @@ email = "farfarfun@qq.com"
 Organization = "https://github.com/farfarfun"
 Repository = "https://github.com/farfarfun/funquery"
 Releases = "https://github.com/farfarfun/funquery/releases"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.setuptools]
 
