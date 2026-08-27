@@ -27,3 +27,6 @@ Repository = "https://github.com/farfarfun/funquery"
 Releases = "https://github.com/farfarfun/funquery/releases"
 
 [tool.setuptools]
+
+[dependency-groups]
+dev = [ "pytest>=7.0",]
