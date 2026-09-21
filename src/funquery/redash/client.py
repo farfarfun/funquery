@@ -10,7 +10,8 @@ API 文档: https://redash.io/help/user-guide/integrations-and-api/api/
 """
 
 import time
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
 
 import requests
 from funsecret import read_secret
@@ -33,8 +34,8 @@ class RedashClient:
 
     def __init__(
         self,
-        redash_url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        redash_url: str | None = None,
+        api_key: str | None = None,
         raise_for_status: bool = True,
     ):
         """初始化客户端。未传 redash_url/api_key 时从 funsecret 读取 visable.middleware.redash 配置。
@@ -71,7 +72,7 @@ class RedashClient:
         page: int = 1,
         page_size: int = 25,
         only_favorites: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """分页获取 query 列表；非参数化 query 含最近一次 query_result_id。
 
         GET /api/queries 或 GET /api/queries/favorites
@@ -85,9 +86,9 @@ class RedashClient:
             含 results、page、page_size、count 等字段的 dict。
         """
         target_url = "api/queries/favorites" if only_favorites else "api/queries"
-        return self._get(target_url, params=dict(page=page, page_size=page_size)).json()
+        return self._get(target_url, params={"page": page, "page_size": page_size}).json()
 
-    def query(self, query_id: int) -> Dict[str, Any]:
+    def query(self, query_id: int) -> dict[str, Any]:
         """获取单个 query 对象。
 
         GET /api/queries/<id>
@@ -100,7 +101,7 @@ class RedashClient:
         """
         return self._get(f"api/queries/{query_id}").json()
 
-    def jobs(self) -> Dict[str, Any]:
+    def jobs(self) -> dict[str, Any]:
         """获取 job 列表（查询执行任务）。
 
         GET /api/jobs
@@ -110,7 +111,7 @@ class RedashClient:
         """
         return self._get("api/jobs").json()
 
-    def job(self, job_id: int) -> Dict[str, Any]:
+    def job(self, job_id: int) -> dict[str, Any]:
         """获取单个查询任务（job）状态与结果 id。
 
         GET /api/jobs/<job_id>
@@ -124,7 +125,7 @@ class RedashClient:
         """
         return self._get(f"api/jobs/{job_id}").json()
 
-    def get_cached_query_result(self, query_id: int) -> Dict[str, Any]:
+    def get_cached_query_result(self, query_id: int) -> dict[str, Any]:
         """获取该 query 的缓存结果（仅无参数 query 可用）。
 
         GET /api/queries/<id>/results
@@ -143,10 +144,10 @@ class RedashClient:
     def query_results(
         self,
         query_id: int,
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         max_age: int = 1800,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """发起执行或返回缓存结果；带参数 query 必须在此传 parameters。
 
         POST /api/queries/<id>/results。优先返回缓存；无缓存时返回 job 对象。
@@ -162,7 +163,7 @@ class RedashClient:
             无缓存时为 job 对象（含 id、status），需再轮询 job 后取 query_result_id。
         """
         path = f"api/queries/{query_id}/results"
-        param: Dict[str, Any] = {"max_age": max_age}
+        param: dict[str, Any] = {"max_age": max_age}
         if parameters is not None:
             param["parameters"] = parameters
         return self._post(path, json=param, **kwargs).json()
@@ -198,11 +199,11 @@ class RedashClient:
     def run_query_and_wait(
         self,
         query_id: int,
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         max_age: int = 0,
         poll_interval: float = 1.0,
-        timeout: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        timeout: float | None = None,
+    ) -> dict[str, Any]:
         """执行 query 并等待完成，返回最终 query result（等价于 Poll for Fresh Query Results）。
 
         先 POST /api/queries/<id>/results；有缓存则直接返回 result；
@@ -222,7 +223,7 @@ class RedashClient:
             TimeoutError: 在 timeout 秒内 job 未完成。
             RuntimeError: job 状态为 FAILURE 或 CANCELLED。
         """
-        payload: Dict[str, Any] = {"max_age": max_age}
+        payload: dict[str, Any] = {"max_age": max_age}
         if parameters is not None:
             payload["parameters"] = parameters
         r = self._post(f"api/queries/{query_id}/results", json=payload).json()
@@ -253,7 +254,7 @@ class RedashClient:
 
     def create_favorite(
         self, resource_type: str, resource_id: int
-    ) -> Optional[requests.Response]:
+    ) -> requests.Response | None:
         """将 query 或 dashboard 加入收藏。
 
         POST /api/queries/<id>/favorite 或 POST /api/dashboards/<id>/favorite
@@ -278,7 +279,7 @@ class RedashClient:
         page: int = 1,
         page_size: int = 25,
         only_disabled: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """分页获取用户列表。
 
         GET /api/users
@@ -291,10 +292,10 @@ class RedashClient:
         Returns:
             含 results、page、page_size、count 等字段的 dict。
         """
-        params = dict(page=page, page_size=page_size, disabled=only_disabled)
+        params = {"page": page, "page_size": page_size, "disabled": only_disabled}
         return self._get("api/users", params=params).json()
 
-    def disable_user(self, user_id: int) -> Dict[str, Any]:
+    def disable_user(self, user_id: int) -> dict[str, Any]:
         """禁用指定用户。
 
         POST /api/users/<user_id>/disable
@@ -312,7 +313,7 @@ class RedashClient:
         page: int = 1,
         page_size: int = 25,
         only_favorites: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """分页获取 dashboard 列表。
 
         GET /api/dashboards 或 GET /api/dashboards/favorites
@@ -326,9 +327,9 @@ class RedashClient:
             含 results、page、page_size、count 等字段的 dict。
         """
         target_url = "api/dashboards/favorites" if only_favorites else "api/dashboards"
-        return self._get(target_url, params=dict(page=page, page_size=page_size)).json()
+        return self._get(target_url, params={"page": page, "page_size": page_size}).json()
 
-    def get_dashboard(self, dashboard_id_or_slug: Union[int, str]) -> Dict[str, Any]:
+    def get_dashboard(self, dashboard_id_or_slug: int | str) -> dict[str, Any]:
         """获取单个 dashboard 对象。
 
         GET /api/dashboards/<dashboard_slug>（部分版本支持 id）
@@ -341,7 +342,7 @@ class RedashClient:
         """
         return self._get(f"api/dashboards/{dashboard_id_or_slug}").json()
 
-    def get_data_sources(self) -> Dict[str, Any]:
+    def get_data_sources(self) -> dict[str, Any]:
         """获取数据源列表。
 
         GET /api/data_sources
@@ -351,7 +352,7 @@ class RedashClient:
         """
         return self._get("api/data_sources").json()
 
-    def get_data_source(self, data_source_id: int) -> Dict[str, Any]:
+    def get_data_source(self, data_source_id: int) -> dict[str, Any]:
         """获取单个数据源。
 
         GET /api/data_sources/<id>
@@ -365,8 +366,8 @@ class RedashClient:
         return self._get(f"api/data_sources/{data_source_id}").json()
 
     def create_data_source(
-        self, name: str, _type: str, options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, name: str, _type: str, options: dict[str, Any]
+    ) -> dict[str, Any]:
         """创建数据源。
 
         POST /api/data_sources
@@ -382,7 +383,7 @@ class RedashClient:
         payload = {"name": name, "type": _type, "options": options}
         return self._post("api/data_sources", json=payload).json()
 
-    def dashboard(self, slug: str) -> Dict[str, Any]:
+    def dashboard(self, slug: str) -> dict[str, Any]:
         """按 slug 获取单个 dashboard（与 get_dashboard(slug) 等价）。
 
         GET /api/dashboards/<dashboard_slug>
@@ -395,7 +396,7 @@ class RedashClient:
         """
         return self.get_dashboard(slug)
 
-    def create_query(self, query_json: Dict[str, Any]) -> Dict[str, Any]:
+    def create_query(self, query_json: dict[str, Any]) -> dict[str, Any]:
         """创建新 query。
 
         POST /api/queries
@@ -408,7 +409,7 @@ class RedashClient:
         """
         return self._post("api/queries", json=query_json).json()
 
-    def create_dashboard(self, name: str) -> Dict[str, Any]:
+    def create_dashboard(self, name: str) -> dict[str, Any]:
         """创建新 dashboard。
 
         POST /api/dashboards
@@ -422,8 +423,8 @@ class RedashClient:
         return self._post("api/dashboards", json={"name": name}).json()
 
     def update_dashboard(
-        self, dashboard_id: int, properties: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, dashboard_id: int, properties: dict[str, Any]
+    ) -> dict[str, Any]:
         """编辑已有 dashboard。
 
         POST /api/dashboards/<dashboard_id>
@@ -440,10 +441,10 @@ class RedashClient:
     def create_widget(
         self,
         dashboard_id: int,
-        visualization_id: Optional[int],
+        visualization_id: int | None,
         text: str,
-        options: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        options: dict[str, Any],
+    ) -> dict[str, Any]:
         """在 dashboard 上创建 widget。
 
         POST /api/widgets
@@ -457,7 +458,7 @@ class RedashClient:
         Returns:
             新创建的 widget 对象。
         """
-        data: Dict[str, Any] = {
+        data: dict[str, Any] = {
             "dashboard_id": dashboard_id,
             "visualization_id": visualization_id,
             "text": text,
@@ -493,8 +494,8 @@ class RedashClient:
         return self._delete(f"api/dashboards/{dashboard_slug}")
 
     def duplicate_dashboard(
-        self, slug: str, new_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, slug: str, new_name: str | None = None
+    ) -> dict[str, Any]:
         """复制 dashboard（等价于 Refresh an entire Dashboard 的“复制”逻辑）。
 
         通过 GET dashboard、POST create_dashboard、再对每个 widget POST create_widget 实现。
@@ -528,8 +529,8 @@ class RedashClient:
         return new_dashboard
 
     def duplicate_query(
-        self, query_id: int, new_name: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, query_id: int, new_name: str | None = None
+    ) -> dict[str, Any]:
         """基于已有 query 复制（fork）为新 query。
 
         POST /api/queries/<id>/fork，可选再 POST 更新 name。
@@ -558,7 +559,7 @@ class RedashClient:
         queries = self.paginate(self.queries)
         return filter(lambda q: q.get("schedule") is not None, queries)
 
-    def update_query(self, query_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_query(self, query_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """编辑已有 query。
 
         POST /api/queries/<id>
@@ -572,7 +573,7 @@ class RedashClient:
         """
         return self._post(f"api/queries/{query_id}", json=data).json()
 
-    def update_visualization(self, viz_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+    def update_visualization(self, viz_id: int, data: dict[str, Any]) -> dict[str, Any]:
         """编辑已有可视化。
 
         POST /api/visualizations/<viz_id>
@@ -586,7 +587,7 @@ class RedashClient:
         """
         return self._post(f"api/visualizations/{viz_id}", json=data).json()
 
-    def alerts(self) -> Dict[str, Any]:
+    def alerts(self) -> dict[str, Any]:
         """获取告警列表（该接口未分页）。
 
         GET /api/alerts
@@ -596,7 +597,7 @@ class RedashClient:
         """
         return self._get("api/alerts").json()
 
-    def get_alert(self, alert_id: int) -> Dict[str, Any]:
+    def get_alert(self, alert_id: int) -> dict[str, Any]:
         """获取单个告警。
 
         GET /api/alerts/<alert_id>
@@ -612,9 +613,9 @@ class RedashClient:
     def create_alert(
         self,
         name: str,
-        options: Dict[str, Any],
+        options: dict[str, Any],
         query_id: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """创建告警。
 
         POST /api/alerts
@@ -627,17 +628,17 @@ class RedashClient:
         Returns:
             新创建的告警对象。
         """
-        payload = dict(name=name, options=options, query_id=query_id)
+        payload = {"name": name, "options": options, "query_id": query_id}
         return self._post("api/alerts", json=payload).json()
 
     def update_alert(
         self,
         alert_id: int,
-        name: Optional[str] = None,
-        options: Optional[Dict[str, Any]] = None,
-        query_id: Optional[int] = None,
-        rearm: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        name: str | None = None,
+        options: dict[str, Any] | None = None,
+        query_id: int | None = None,
+        rearm: int | None = None,
+    ) -> dict[str, Any]:
         """更新告警（仅传非 None 的字段会参与更新）。
 
         POST /api/alerts/<id>
@@ -652,17 +653,17 @@ class RedashClient:
         Returns:
             更新后的告警对象。
         """
-        payload = dict(name=name, options=options, query_id=query_id, rearm=rearm)
+        payload = {"name": name, "options": options, "query_id": query_id, "rearm": rearm}
         no_none = {k: v for k, v in payload.items() if v is not None}
         return self._post(f"api/alerts/{alert_id}", json=no_none).json()
 
     def paginate(
         self,
-        resource: Callable[..., Dict[str, Any]],
+        resource: Callable[..., dict[str, Any]],
         page: int = 1,
         page_size: int = 100,
         **kwargs: Any,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """拉取分页资源的全部条目（递归请求直到无更多页）。
 
         resource 需为接受 page、page_size（及 **kwargs）并返回含 results、page、
@@ -680,7 +681,7 @@ class RedashClient:
         Note:
             可能受 Redash rate limit 影响（如 50/hr, 200/day）。
         """
-        all_items: List[Any] = []
+        all_items: list[Any] = []
         while True:
             response = resource(page=page, page_size=page_size, **kwargs)
             items = response.get("results", [])

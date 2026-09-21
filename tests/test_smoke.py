@@ -154,6 +154,32 @@ def test_paginate_collects_all_pages_without_network():
     assert items == ["a", "b", "c"]
 
 
+@pytest.mark.parametrize(
+    ("method_name", "path"),
+    [
+        ("users", "api/users"),
+        ("dashboards", "api/dashboards"),
+        ("get_data_sources", "api/data_sources"),
+        ("alerts", "api/alerts"),
+    ],
+)
+def test_public_collection_apis_use_expected_endpoint(method_name, path):
+    """公开集合 API 的正常路径应解析响应并请求正确端点。"""
+    from funquery.redash import RedashClient
+
+    client_obj = RedashClient(redash_url="https://redash.example.com", api_key="k")
+    fake_response = MagicMock()
+    fake_response.raise_for_status = MagicMock()
+    fake_response.json.return_value = {"results": []}
+    client_obj.session.request = MagicMock(return_value=fake_response)
+
+    result = getattr(client_obj, method_name)()
+
+    assert result == {"results": []}
+    args, _kwargs = client_obj.session.request.call_args
+    assert args[:2] == ("GET", f"https://redash.example.com/{path}")
+
+
 def test_no_cli_entry_point_declared():
     """funquery 的 pyproject.toml 未声明 [project.scripts]，因此没有 CLI 冒烟测试目标。
 

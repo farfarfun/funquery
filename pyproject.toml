@@ -4,7 +4,7 @@ version = "1.0.5"
 description = "funquery"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [ "funsecret>=1.4.83", "requests>=2.31.0",]
+dependencies = [ "funsecret>=1.4.84", "requests>=2.31.0",]
 license = "MIT"
 license-files = ["LICENSE"]
 [[project.authors]]
