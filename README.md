@@ -35,9 +35,13 @@ uv add funquery
 ```python
 from funquery.redash import RedashClient
 
-# 方式一：直接传入参数
+# 方式一：直接传入参数（无需 funsecret）
 client = RedashClient(redash_url="https://redash.example.com", api_key="your-api-key")
+```
 
+或先配置 funsecret，再使用默认构造方式：
+
+```python
 # 方式二：从 funsecret 读取配置
 # 需要配置 visable.middleware.redash.redash_url 和 visable.middleware.redash.api_key
 client = RedashClient()

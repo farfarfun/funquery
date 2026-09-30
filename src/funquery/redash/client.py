@@ -16,6 +16,8 @@ from typing import Any
 import requests
 from funsecret import read_secret
 
+from .exceptions import QueryJobError
+
 # Job 状态 (GET /api/jobs/<job_id>)
 JOB_PENDING = 1
 JOB_STARTED = 2
@@ -221,7 +223,7 @@ class RedashClient:
 
         Raises:
             TimeoutError: 在 timeout 秒内 job 未完成。
-            RuntimeError: job 状态为 FAILURE 或 CANCELLED。
+            QueryJobError: job 状态为 FAILURE 或 CANCELLED，并包含服务端错误详情。
         """
         payload: dict[str, Any] = {"max_age": max_age}
         if parameters is not None:
@@ -247,9 +249,9 @@ class RedashClient:
                 if result_id is not None:
                     return self.query_result(result_id)
             if status == JOB_FAILURE:
-                raise RuntimeError(f"Query job {job_id} failed")
+                raise QueryJobError(job_id, status, job_data.get("error") or job_data.get("message"))
             if status == JOB_CANCELLED:
-                raise RuntimeError(f"Query job {job_id} was cancelled")
+                raise QueryJobError(job_id, status, job_data.get("error") or job_data.get("message"))
             time.sleep(poll_interval)
 
     def create_favorite(

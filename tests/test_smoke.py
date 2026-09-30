@@ -82,6 +82,23 @@ def test_query_result_invalid_fmt_raises_without_network():
         client_obj.query_result(123, fmt="xml")
 
 
+def test_run_query_failure_raises_domain_error():
+    """查询任务失败时应保留任务编号、状态和服务端错误。"""
+    from funquery.redash import QueryJobError, RedashClient
+
+    client_obj = RedashClient(redash_url="https://redash.example.com", api_key="k")
+    class Response:
+        def json(self):
+            return {"job": {"id": 9}}
+
+    client_obj._post = lambda *args, **kwargs: Response()
+    client_obj.job = lambda job_id: {"job": {"id": job_id, "status": 4, "error": "bad SQL"}}
+
+    with pytest.raises(QueryJobError, match="bad SQL") as error:
+        client_obj.run_query_and_wait(1, poll_interval=0)
+    assert error.value.job_id == 9
+
+
 def test_test_credentials_mocked_success():
     """test_credentials() 在底层 HTTP 请求被 mock 成功时返回 True，不触碰真实网络。"""
     from funquery.redash import RedashClient
