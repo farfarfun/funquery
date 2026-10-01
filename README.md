@@ -232,11 +232,13 @@ favorite_dashboards = client.dashboards(only_favorites=True)
 ```python
 import requests
 
+from funquery.redash import QueryJobError
+
 try:
     result = client.run_query_and_wait(query_id=123, timeout=30)
 except TimeoutError as e:
     print(f"查询超时: {e}")
-except RuntimeError as e:
+except QueryJobError as e:
     print(f"查询失败: {e}")
 except requests.HTTPError as e:
     print(f"HTTP 错误: {e}")
