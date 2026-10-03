@@ -1,5 +1,5 @@
 """
-Redash API client.
+Redash API 客户端模块。
 
 API 文档: https://redash.io/help/user-guide/integrations-and-api/api/
 - 支持 User API Key 与 Query API Key
@@ -39,7 +39,7 @@ class RedashClient:
         redash_url: str | None = None,
         api_key: str | None = None,
         raise_for_status: bool = True,
-    ):
+    ) -> None:
         """初始化客户端。未传 redash_url/api_key 时从 funsecret 读取 visable.middleware.redash 配置。
 
         Args:

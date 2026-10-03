@@ -202,3 +202,165 @@ def test_paginate_stops_on_empty_first_page(client):
 
     assert client.paginate(resource) == []
     resource.assert_called_once_with(page=1, page_size=100)
+
+
+def test_jobs_lists_pending_jobs(client):
+    client._get = MagicMock(return_value=response({"jobs": [{"id": 1}]}))
+
+    assert client.jobs() == {"jobs": [{"id": 1}]}
+    client._get.assert_called_once_with("api/jobs")
+
+
+def test_job_fetches_single_job_by_id(client):
+    client._get = MagicMock(return_value=response({"job": {"id": 9, "status": 3}}))
+
+    assert client.job(9) == {"job": {"id": 9, "status": 3}}
+    client._get.assert_called_once_with("api/jobs/9")
+
+
+def test_get_cached_query_result_returns_parsed_json(client):
+    client._get = MagicMock(return_value=response({"query_result": {"id": 1}}))
+
+    assert client.get_cached_query_result(7) == {"query_result": {"id": 1}}
+    client._get.assert_called_once_with("api/queries/7/results")
+
+
+def test_get_cached_query_result_propagates_http_error_without_cache(client):
+    client._get = MagicMock(side_effect=requests.HTTPError("no cached result found"))
+
+    with pytest.raises(requests.HTTPError, match="no cached result found"):
+        client.get_cached_query_result(7)
+
+
+def test_disable_user_posts_to_disable_endpoint(client):
+    client._post = MagicMock(return_value=response({"id": 5, "disabled_at": "now"}))
+
+    assert client.disable_user(5) == {"id": 5, "disabled_at": "now"}
+    client._post.assert_called_once_with("api/users/5/disable")
+
+
+def test_get_dashboard_fetches_by_slug_or_id(client):
+    client._get = MagicMock(return_value=response({"name": "Sales"}))
+
+    assert client.get_dashboard("sales") == {"name": "Sales"}
+    client._get.assert_called_once_with("api/dashboards/sales")
+
+
+def test_dashboard_delegates_to_get_dashboard(client):
+    client.get_dashboard = MagicMock(return_value={"name": "Sales"})
+
+    assert client.dashboard("sales") == {"name": "Sales"}
+    client.get_dashboard.assert_called_once_with("sales")
+
+
+def test_get_data_source_fetches_single_source(client):
+    client._get = MagicMock(return_value=response({"id": 1, "name": "warehouse"}))
+
+    assert client.get_data_source(1) == {"id": 1, "name": "warehouse"}
+    client._get.assert_called_once_with("api/data_sources/1")
+
+
+def test_update_visualization_sends_patch_payload(client):
+    client._post = MagicMock(return_value=response({"id": 3, "options": {"a": 1}}))
+
+    result = client.update_visualization(3, {"options": {"a": 1}})
+
+    assert result == {"id": 3, "options": {"a": 1}}
+    client._post.assert_called_once_with(
+        "api/visualizations/3", json={"options": {"a": 1}}
+    )
+
+
+def test_get_alert_fetches_single_alert(client):
+    client._get = MagicMock(return_value=response({"id": 2, "name": "high cpu"}))
+
+    assert client.get_alert(2) == {"id": 2, "name": "high cpu"}
+    client._get.assert_called_once_with("api/alerts/2")
+
+
+@pytest.mark.parametrize(
+    ("resource_type", "resource_id", "path"),
+    [
+        ("query", 1, "api/queries/1/favorite"),
+        ("dashboard", 2, "api/dashboards/2/favorite"),
+    ],
+)
+def test_create_favorite_posts_to_expected_endpoint(
+    client, resource_type, resource_id, path
+):
+    favorited = response()
+    client._post = MagicMock(return_value=favorited)
+
+    assert client.create_favorite(resource_type, resource_id) is favorited
+    client._post.assert_called_once_with(path, json={})
+
+
+def test_create_favorite_returns_none_for_unknown_resource_type(client):
+    client._post = MagicMock()
+
+    assert client.create_favorite("widget", 1) is None
+    client._post.assert_not_called()
+
+
+def test_scheduled_queries_filters_out_queries_without_schedule(client):
+    client.paginate = MagicMock(
+        return_value=[
+            {"id": 1, "schedule": {"interval": 3600}},
+            {"id": 2, "schedule": None},
+        ]
+    )
+
+    result = list(client.scheduled_queries())
+
+    assert result == [{"id": 1, "schedule": {"interval": 3600}}]
+    client.paginate.assert_called_once_with(client.queries)
+
+
+def test_duplicate_query_forks_without_renaming(client):
+    client._post = MagicMock(return_value=response({"id": 42, "name": "Copy of Q"}))
+
+    result = client.duplicate_query(7)
+
+    assert result == {"id": 42, "name": "Copy of Q"}
+    client._post.assert_called_once_with("api/queries/7/fork")
+
+
+def test_duplicate_query_renames_forked_copy(client):
+    fork_response = response({"id": 42, "name": "Copy of Q"})
+    client._post = MagicMock(return_value=fork_response)
+    client.update_query = MagicMock(return_value={"id": 42, "name": "Renamed"})
+
+    result = client.duplicate_query(7, new_name="Renamed")
+
+    assert result == {"id": 42, "name": "Renamed"}
+    client.update_query.assert_called_once_with(42, {"id": 42, "name": "Renamed"})
+
+
+def test_queries_only_favorites_uses_favorites_endpoint(client):
+    client._get = MagicMock(return_value=response({"results": []}))
+
+    client.queries(page=2, page_size=10, only_favorites=True)
+
+    client._get.assert_called_once_with(
+        "api/queries/favorites", params={"page": 2, "page_size": 10}
+    )
+
+
+def test_dashboards_only_favorites_uses_favorites_endpoint(client):
+    client._get = MagicMock(return_value=response({"results": []}))
+
+    client.dashboards(page=1, page_size=5, only_favorites=True)
+
+    client._get.assert_called_once_with(
+        "api/dashboards/favorites", params={"page": 1, "page_size": 5}
+    )
+
+
+def test_users_only_disabled_filter_is_forwarded(client):
+    client._get = MagicMock(return_value=response({"results": []}))
+
+    client.users(only_disabled=True)
+
+    client._get.assert_called_once_with(
+        "api/users", params={"page": 1, "page_size": 25, "disabled": True}
+    )
