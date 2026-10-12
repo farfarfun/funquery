@@ -87,12 +87,15 @@ def test_run_query_failure_raises_domain_error():
     from funquery.redash import QueryJobError, RedashClient
 
     client_obj = RedashClient(redash_url="https://redash.example.com", api_key="k")
+
     class Response:
         def json(self):
             return {"job": {"id": 9}}
 
     client_obj._post = lambda *args, **kwargs: Response()
-    client_obj.job = lambda job_id: {"job": {"id": job_id, "status": 4, "error": "bad SQL"}}
+    client_obj.job = lambda job_id: {
+        "job": {"id": job_id, "status": 4, "error": "bad SQL"}
+    }
 
     with pytest.raises(QueryJobError, match="bad SQL") as error:
         client_obj.run_query_and_wait(1, poll_interval=0)

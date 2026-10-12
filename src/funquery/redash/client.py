@@ -88,7 +88,9 @@ class RedashClient:
             含 results、page、page_size、count 等字段的 dict。
         """
         target_url = "api/queries/favorites" if only_favorites else "api/queries"
-        return self._get(target_url, params={"page": page, "page_size": page_size}).json()
+        return self._get(
+            target_url, params={"page": page, "page_size": page_size}
+        ).json()
 
     def query(self, query_id: int) -> dict[str, Any]:
         """获取单个 query 对象。
@@ -249,9 +251,13 @@ class RedashClient:
                 if result_id is not None:
                     return self.query_result(result_id)
             if status == JOB_FAILURE:
-                raise QueryJobError(job_id, status, job_data.get("error") or job_data.get("message"))
+                raise QueryJobError(
+                    job_id, status, job_data.get("error") or job_data.get("message")
+                )
             if status == JOB_CANCELLED:
-                raise QueryJobError(job_id, status, job_data.get("error") or job_data.get("message"))
+                raise QueryJobError(
+                    job_id, status, job_data.get("error") or job_data.get("message")
+                )
             time.sleep(poll_interval)
 
     def create_favorite(
@@ -329,7 +335,9 @@ class RedashClient:
             含 results、page、page_size、count 等字段的 dict。
         """
         target_url = "api/dashboards/favorites" if only_favorites else "api/dashboards"
-        return self._get(target_url, params={"page": page, "page_size": page_size}).json()
+        return self._get(
+            target_url, params={"page": page, "page_size": page_size}
+        ).json()
 
     def get_dashboard(self, dashboard_id_or_slug: int | str) -> dict[str, Any]:
         """获取单个 dashboard 对象。
@@ -655,7 +663,12 @@ class RedashClient:
         Returns:
             更新后的告警对象。
         """
-        payload = {"name": name, "options": options, "query_id": query_id, "rearm": rearm}
+        payload = {
+            "name": name,
+            "options": options,
+            "query_id": query_id,
+            "rearm": rearm,
+        }
         no_none = {k: v for k, v in payload.items() if v is not None}
         return self._post(f"api/alerts/{alert_id}", json=no_none).json()
 

@@ -56,9 +56,11 @@ def test_run_query_waits_until_success(client):
 def test_run_query_times_out(client):
     client._post = MagicMock(return_value=response({"job": {"id": 8}}))
 
-    with patch("funquery.redash.client.time.monotonic", side_effect=[10.0, 11.0]):
-        with pytest.raises(TimeoutError, match="job 8"):
-            client.run_query_and_wait(7, timeout=1)
+    with (
+        patch("funquery.redash.client.time.monotonic", side_effect=[10.0, 11.0]),
+        pytest.raises(TimeoutError, match="job 8"),
+    ):
+        client.run_query_and_wait(7, timeout=1)
 
 
 @pytest.mark.parametrize(
@@ -67,9 +69,7 @@ def test_run_query_times_out(client):
 )
 def test_run_query_raises_domain_error_with_server_context(client, status, detail):
     client._post = MagicMock(return_value=response({"job": {"id": 8}}))
-    client.job = MagicMock(
-        return_value={"job": {"status": status, "message": detail}}
-    )
+    client.job = MagicMock(return_value={"job": {"status": status, "message": detail}})
 
     with pytest.raises(QueryJobError, match=detail) as exc_info:
         client.run_query_and_wait(7, poll_interval=0)
