@@ -8,4 +8,6 @@ class QueryJobError(RuntimeError):
         self.job_id = job_id
         self.status = status
         self.detail = detail
-        super().__init__(f"Redash query job {job_id} status={status}: {detail or '无详细信息'}")
+        super().__init__(
+            f"Redash query job {job_id} status={status}: {detail or '无详细信息'}"
+        )
